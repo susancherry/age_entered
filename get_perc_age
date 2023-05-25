@@ -1,0 +1,37 @@
+import pandas as pd
+birthdays = pd.read_csv("/disk/homedirs/nber/sc4331/equifax_scratch/sc4331/age_entered/birthday_dates.csv")
+birthdays['day'] = 1
+birth_dates = birthdays['birth_year'].astype(str) + '-' + birthdays['birth_month'].astype(str) + '-' + birthdays['day'].astype(str)
+birthdays['birthdate'] = pd.to_datetime(birth_dates)
+birthdays = birthdays.drop('Unnamed: 0', axis=1)
+birthdays = birthdays.drop('day', axis=1)
+df=[]
+for year in range(2008,2014):
+  for m in [3,6,9,12]:
+    if m<10:
+      month = "0"+str(m)
+    else:
+      month = str(m)
+    file_name ="/disk/homedirs/nber/sc4331/equifax_scratch/equifax/equifax_aws/"+str(year)
+    file_name =file_name+month
+    file_name=file_name+".csv.gz"
+    cols = ["ARCHIVE_DATE","NUMBER_OPEN_BANKCARD_ACCOUNTS","CONSUMER_ID"]
+    data =	pd.read_csv(file_name, usecols=cols)
+    data["ARCHIVE_DATE"] = pd.to_datetime(data["ARCHIVE_DATE"])
+    data = data.merge(birthdays, on="CONSUMER_ID")
+    import numpy as np
+    data["age"]=(data['ARCHIVE_DATE'] - data['birthdate'])
+    data["age"]=data["age"]/ np.timedelta64(1, 'Y')
+    data["age"]=np.floor(data["age"])
+    data["age_group"]=np.nan
+    data=data.loc[data.age>=18]
+    data.loc[data.age<21,"age_group"]="-21"
+    data.loc[data.age>=21,"age_group"]="21-24"
+    data.loc[data.age>=25,"age_group"]="25-34"
+    data=data.loc[data.age<35]
+    data["open"]=0
+    data.loc[data.NUMBER_OPEN_BANKCARD_ACCOUNTS>=1,"open"]=1
+    data.loc[data.NUMBER_OPEN_BANKCARD_ACCOUNTS==98,"open"]=0
+    one=str(year)+str(m)
+    one=one+".csv"
+    pd.DataFrame(data.groupby("age_group").mean()).to_csv(one)
