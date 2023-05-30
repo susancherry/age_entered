@@ -1,0 +1,27 @@
+import pandas as pd
+birthdays = pd.read_csv("birthday_dates.csv")
+birthdays['day'] = 1
+birth_dates = birthdays['birth_year'].astype(str) + '-' + birthdays['birth_month'].astype(str) + '-' + birthdays['day'].astype(str)
+birthdays['birthdate'] = pd.to_datetime(birth_dates)
+birthdays = birthdays.drop('Unnamed: 0', axis=1)
+birthdays = birthdays.drop('day', axis=1)
+for year in range(2016, 2021):
+    for m in range(1, 13):
+        month = str(m).zfill(2)
+        file_name = "/disk/homedirs/nber/sc4331/equifax_scratch/equifax/equifax_aws/" + str(year) + month + ".csv.gz"
+        data = pd.read_csv(file_name)
+        data = data.loc[data['CONSUMER_AGE_ARCHIVE'] == 2]
+        data["archive_year"] = data['ARCHIVE_DATE'].astype(str).str[0:4].astype(int)
+        data["archive_month"] = data['ARCHIVE_DATE'].astype(str).str[5:7].astype(int)
+        data['day'] = 1
+        dates = data["archive_year"].astype(str) + '-' + data["archive_month"].astype(str) + '-' + data['day'].astype(str)
+        data['date'] = pd.to_datetime(dates)
+        data = data.merge(birthdays, on="CONSUMER_ID")
+        data.dropna(subset=['birthdate'], inplace=True)
+        data.dropna(subset=['date'], inplace=True)
+        data = data.loc[data.birth_month == m]
+        data = data.loc[data.birth_year == (year - 26)]
+        if (month == "01") and (year == 2016):
+            data.to_csv("birthday_sample.csv", index=False, header=True, mode='w')
+        else:
+            data.to_csv("birthday_sample.csv", index=False, header=False, mode='a')
