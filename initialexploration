@@ -1,0 +1,38 @@
+cd /disk/homedirs/nber/cre2114/equifax_scratch/equifax/sc4331/age_entered/
+
+python3
+import pandas as pd 
+
+data = pd.read_csv("/disk/homedirs/nber/cre2114/equifax_scratch/equifax/sc4331/age_entered/birthday_sample.csv")
+
+c = pd.DataFrame(data.groupby(["CONSUMER_ID","ARCHIVE_DATE"]).first()).reset_index()
+
+
+c.loc[pd.isnull(c["SMALL_BUSINESS_OWNER_FLAG"]),"SMALL_BUSINESS_OWNER_FLAG"]=0
+small_business_owner_flag
+minority=pd.read_csv("/disk/homedirs/nber/cre2114/equifax_scratch/equifax/sc4331/corona_paper/regional/ACS_zip/race_2018.csv")
+minority=minority[['Geographic Area Name', 'perc_white', 'perc_black',"perc_hispanic"]]
+minority.columns =['zip_code',  'perc_white', 'perc_black',"perc_hispanic"]
+minority["zip_code"]=minority["zip_code"].astype(str).str.replace('ZCTA5 ', '', regex=True).astype(int)
+c=c.merge(minority, left_on="ZIP_CODE", right_on="zip_code")
+c["perc_black"]=pd.to_numeric(c["perc_black"], errors='coerce')
+c["archive_month"] = c['ARCHIVE_DATE'].astype(str).str[5:7].astype(int)
+c['quarter']=1
+c.loc[c.archive_month>3,'quarter']=2
+c.loc[c.archive_month>6,'quarter']=3
+c.loc[c.archive_month>9,'quarter']=4
+
+c["archive_year"] = c['ARCHIVE_DATE'].astype(str).str[0:4].astype(int)
+
+c.loc[c["TOTAL_PAST_DUE_AMOUNT"]>9000,"TOTAL_PAST_DUE_AMOUNT"]=0
+c.loc[c["BANKRUPTCY_FLAG"]>90,"BANKRUPTCY_FLAG"]=0
+c["perc_white"]=pd.to_numeric(c["perc_white"], errors='coerce')
+c.loc[c["TOTAL_PAST_DUE_AMOUNT"]>9000,"TOTAL_PAST_DUE_AMOUNT"]=0
+number_accounts_major_derogatory
+total_amount_3rd_party_collections
+c.loc[c.perc_white<50].groupby(["archive_year","quarter"])["SMALL_BUSINESS_OWNER_FLAG"].mean()
+c.loc[c.perc_white<101].groupby(["archive_year","quarter"])["SMALL_BUSINESS_OWNER_FLAG"].mean()
+c.groupby(["archive_year","quarter"])["VANTAGE_SCORE_3"].mean()
+
+
+c["days_since_act"]=[]
